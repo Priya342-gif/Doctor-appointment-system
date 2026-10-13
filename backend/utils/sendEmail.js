@@ -11,6 +11,9 @@ const sendEmail = async ({ to, subject, html }) => {
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
+      connectionTimeout: 8000,
+      greetingTimeout: 8000,
+      socketTimeout: 10000,
       auth: {
         user: process.env.EMAIL_USER.trim(),
         pass: cleanPass,
@@ -33,6 +36,7 @@ const sendEmail = async ({ to, subject, html }) => {
     return info;
   } catch (error) {
     console.error('Email sending error:', error.message);
+    return null;
   }
 };
 
