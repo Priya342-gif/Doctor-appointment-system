@@ -4,20 +4,38 @@ const Doctor = require('../models/Doctor');
 const generateToken = require('../utils/generateToken');
 
 // @desc    Register patient
-// @route   POST /api/auth/register
+// @route   POST /api/auth/register or /auth/register
 // @access  Public
 const registerPatient = asyncHandler(async (req, res) => {
   const { name, email, password, phone, age, gender, address } = req.body;
 
-  const userExists = await User.findOne({ email });
+  const normalizedEmail = email ? email.trim().toLowerCase() : '';
+
+  const userExists = await User.findOne({ email: normalizedEmail });
   if (userExists) {
     res.status(400);
     throw new Error('Email already registered');
   }
 
-  const user = await User.create({
-    name, email, password, phone, age, gender, address, role: 'patient',
-  });
+  // Sanitize fields so empty strings from form don't fail Mongoose schema enums/types
+  const userData = {
+    name: name ? name.trim() : '',
+    email: normalizedEmail,
+    password,
+    role: 'patient',
+  };
+
+  if (phone && phone.trim()) userData.phone = phone.trim();
+  if (age !== undefined && age !== null && age !== '') {
+    const parsedAge = Number(age);
+    if (!isNaN(parsedAge) && parsedAge > 0) userData.age = parsedAge;
+  }
+  if (gender && ['male', 'female', 'other'].includes(gender)) {
+    userData.gender = gender;
+  }
+  if (address && address.trim()) userData.address = address.trim();
+
+  const user = await User.create(userData);
 
   res.status(201).json({
     success: true,
@@ -33,12 +51,13 @@ const registerPatient = asyncHandler(async (req, res) => {
 });
 
 // @desc    Login user (patient/doctor/admin)
-// @route   POST /api/auth/login
+// @route   POST /api/auth/login or /auth/login
 // @access  Public
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+  const normalizedEmail = email ? email.trim().toLowerCase() : '';
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email: normalizedEmail });
   if (!user || !(await user.matchPassword(password))) {
     res.status(401);
     throw new Error('Invalid email or password');
@@ -74,7 +93,7 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 // @desc    Get current user profile
-// @route   GET /api/auth/me
+// @route   GET /api/auth/me or /auth/me
 // @access  Private
 const getMe = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
@@ -86,7 +105,7 @@ const getMe = asyncHandler(async (req, res) => {
 });
 
 // @desc    Update password
-// @route   PUT /api/auth/update-password
+// @route   PUT /api/auth/update-password or /auth/update-password
 // @access  Private
 const updatePassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;

@@ -17,12 +17,28 @@ const Register = () => {
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      const res = await registerAPI(data);
+      // Clean up optional fields before sending so empty strings aren't sent
+      const payload = {
+        name: data.name?.trim(),
+        email: data.email?.trim(),
+        password: data.password,
+      };
+      if (data.phone && data.phone.trim()) payload.phone = data.phone.trim();
+      if (data.age && !isNaN(Number(data.age))) payload.age = Number(data.age);
+      if (data.gender && data.gender.trim()) payload.gender = data.gender.trim();
+      if (data.address && data.address.trim()) payload.address = data.address.trim();
+
+      const res = await registerAPI(payload);
       login(res.data.data);
       toast.success('Registration successful!');
       navigate('/patient/dashboard');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Registration failed');
+      const errorMessage =
+        err.response?.data?.message ||
+        (err.message === 'Network Error'
+          ? 'Network / CORS error: Unable to connect to server. Please check your backend deployment.'
+          : 'Registration failed');
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

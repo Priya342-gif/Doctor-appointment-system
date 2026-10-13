@@ -17,13 +17,21 @@ const Login = () => {
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      const res = await loginAPI(data);
+      const res = await loginAPI({
+        email: data.email?.trim(),
+        password: data.password,
+      });
       login(res.data.data);
       toast.success(`Welcome back, ${res.data.data.name}!`);
       const redirectMap = { admin: '/admin/dashboard', doctor: '/doctor/dashboard', patient: '/patient/dashboard' };
       navigate(redirectMap[res.data.data.role] || '/');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Login failed');
+      const errorMessage =
+        err.response?.data?.message ||
+        (err.message === 'Network Error'
+          ? 'Network / CORS error: Unable to connect to server. Please check your backend deployment.'
+          : 'Login failed');
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

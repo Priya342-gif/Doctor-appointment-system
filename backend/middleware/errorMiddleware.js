@@ -21,6 +21,12 @@ const errorHandler = (err, req, res, next) => {
     message = Object.values(err.errors).map((e) => e.message).join(', ');
   }
 
+  // Ensure CORS headers are attached on error responses
+  if (req.headers && req.headers.origin && !res.getHeader('Access-Control-Allow-Origin')) {
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+
   res.status(statusCode).json({
     success: false,
     message,

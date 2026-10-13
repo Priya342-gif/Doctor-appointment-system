@@ -1,7 +1,22 @@
 import axios from 'axios';
 
+// Helper to determine normalized API baseURL
+const getBaseURL = () => {
+  let url = process.env.REACT_APP_API_URL;
+  if (!url || !url.trim()) {
+    return '/api';
+  }
+  // Trim trailing slashes
+  url = url.trim().replace(/\/+$/, '');
+  // If the URL does not already end with /api, append /api
+  if (!url.endsWith('/api')) {
+    url = `${url}/api`;
+  }
+  return url;
+};
+
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || '/api',
+  baseURL: getBaseURL(),
   headers: { 'Content-Type': 'application/json' },
 });
 
