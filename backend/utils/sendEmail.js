@@ -2,29 +2,37 @@ const nodemailer = require('nodemailer');
 
 const sendEmail = async ({ to, subject, html }) => {
   try {
-    const transporter = nodemailer.createTransporter({
-      host: process.env.EMAIL_HOST,
-      port: process.env.EMAIL_PORT,
-      secure: false,
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.warn('Email skipped: EMAIL_USER or EMAIL_PASS not configured in environment variables.');
+      return null;
+    }
+
+    const cleanPass = process.env.EMAIL_PASS.replace(/\s+/g, '');
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL_USER.trim(),
+        pass: cleanPass,
       },
     });
 
+    const fromAddress = process.env.EMAIL_FROM
+      ? process.env.EMAIL_FROM.trim()
+      : process.env.EMAIL_USER.trim();
+
     const mailOptions = {
-      from: `"DocBook" <${process.env.EMAIL_FROM}>`,
+      from: `"DocBook" <${fromAddress}>`,
       to,
       subject,
       html,
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent:', info.messageId);
+    console.log('Email sent successfully to', to, '- Message ID:', info.messageId);
     return info;
   } catch (error) {
-    console.error('Email error:', error.message);
-    // Don't throw — email is optional
+    console.error('Email sending error:', error.message);
   }
 };
 
