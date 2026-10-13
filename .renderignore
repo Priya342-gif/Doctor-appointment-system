@@ -1,0 +1,19 @@
+# Files to ignore during Render deployment
+
+# Development files
+*.log
+.env.local
+.env.development
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Test files
+*.test.js
+*.spec.js
+__tests__/
